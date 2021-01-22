@@ -1,5 +1,10 @@
 package com.shadow.chat.server;
 
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
+import com.shadow.chat.bean.Message;
+import com.shadow.chat.bean.SerializationUtil;
+import com.shadow.chat.bean.User;
 import com.shadow.chat.bean.client.ReqMessage;
 import com.shadow.chat.bean.client.ReqSingleDataDTO;
 import com.shadow.chat.bean.client.ReqUserLoginDTO;
@@ -16,6 +21,7 @@ import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -53,7 +59,18 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         CHANNEL_GROUP.remove(ctx.channel().id().asLongText());
         log.info("channelInactive | 连接断开{}，当前连接数：{}", getAddress(ctx).getHostString(), CHANNEL_GROUP.size());
     }
-
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception{
+        Message data = (Message)msg;
+        String s = new String(data.getContent(), CharsetUtil.UTF_8);
+        System.out.println(s);
+        byte[] bytes = (s + "服务器回应").getBytes(StandardCharsets.UTF_8);
+        Message d = new Message();
+        d.setLength(bytes.length);
+        d.setContent(bytes);
+        ctx.writeAndFlush(d);
+    }
+    /**
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 //        System.out.println(msg);
@@ -113,11 +130,11 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
                 log.error("channelRead | 收到异常消息：{}", msg);
             }
         } finally {
-            ReferenceCountUtil.release(msg);
+//            ReferenceCountUtil.release(msg);
         }
 
     }
-
+*/
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.info("exceptionCaught | 发生异常：{}", cause.getMessage(), cause);
@@ -148,12 +165,11 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     public static void main(String[] args) {
 
         byte[] data = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09};
-        ByteBuf buf = Unpooled.buffer();
-        buf.ensureWritable(20);
-        System.out.println(buf);
-        buf.writeBytes(data);
-        System.out.println(buf.touch());
+        ByteBuf buf = Unpooled.wrappedBuffer(data);
 
+        System.out.println(buf.getByte(2));
+        data[2] = 0x09;
+        System.out.println(buf.getByte(2));
     }
 
 }

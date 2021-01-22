@@ -1,7 +1,8 @@
 package com.shadow.chat.client;
 
+import com.shadow.chat.bean.MessageDecoder;
+import com.shadow.chat.bean.MessageEncoder;
 import com.shadow.chat.bean.client.ReqMessage;
-import com.shadow.chat.bean.client.ReqUserLoginDTO;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -9,10 +10,9 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.serialization.ClassResolvers;
-import io.netty.handler.codec.serialization.ObjectDecoder;
-import io.netty.handler.codec.serialization.ObjectEncoder;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Shadow
@@ -57,13 +57,19 @@ public class Client {
                 protected void initChannel(SocketChannel ch) throws Exception {
 
                     ch.pipeline()
-                            .addLast(new ObjectDecoder(1024 * 1024, ClassResolvers.cacheDisabled(this.getClass().getClassLoader())))
-                            .addLast(new ObjectEncoder())
+//                            .addLast(new ObjectDecoder(1024 * 1024, ClassResolvers.cacheDisabled(this.getClass().getClassLoader())))
+//                            .addLast(new ObjectEncoder())
+                            .addLast(new MessageEncoder())
+                            .addLast(new MessageDecoder())
                             .addLast(new ClientHandler());
                 }
             });
             ChannelFuture conn = b.connect(host, port).sync();
-            conn.addListener((e) -> {
+            conn.addListener(new ClientConnectListener());
+            conn.channel().eventLoop().schedule(()->{
+                System.out.println("aaaa");
+            },3, TimeUnit.SECONDS);
+            /*conn.addListener((e) -> {
                 if (e.isSuccess()) {
                     channel = conn.channel();
                     ReqMessage reqMessage = new ReqMessage();
@@ -80,7 +86,7 @@ public class Client {
                 } else {
                     log.info("run | 连接失败");
                 }
-            });
+            });*/
             conn.channel().closeFuture().sync().addListener((future -> log.info("run | 连接断开")));
         } catch (InterruptedException e) {
             log.error("run | 连接失败:{}", e.getMessage(), e);

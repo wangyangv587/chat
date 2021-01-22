@@ -2,16 +2,21 @@ package com.shadow.chat.client;
 
 import cn.hutool.log.Log;
 import cn.hutool.log.LogFactory;
+import com.shadow.chat.bean.Message;
+import com.shadow.chat.bean.SerializationUtil;
+import com.shadow.chat.bean.User;
 import com.shadow.chat.bean.constant.Chat;
 import com.shadow.chat.bean.server.RespMessage;
 import com.shadow.chat.bean.server.RespSingleDataDTO;
 import com.shadow.chat.bean.server.RespSystemDataDTO;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Shadow
@@ -24,6 +29,14 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.info("channelActive | 连接成功{}", getAddress(ctx).getHostString());
+        for (int i = 0; i < 100; i++) {
+//            byte[] serializer = SerializationUtil.serializer(user);
+            byte[] bytes = "names".getBytes(StandardCharsets.UTF_8);
+            Message message = new Message();
+            message.setLength(bytes.length);
+            message.setContent(bytes);
+            ctx.writeAndFlush(message);
+        }
     }
 
     @Override
@@ -34,7 +47,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        try {
+
+        Message data = (Message)msg;
+        String s = new String(data.getContent(), CharsetUtil.UTF_8);
+        System.out.println(s);
+        /*try {
             log.info("channelRead | 收到消息：{}", msg);
             RespMessage respMessage = (RespMessage) msg;
             if (respMessage.getCmd().equals(Chat.Cmd.SINGLE)) {
@@ -49,7 +66,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
             }
         } finally {
             ReferenceCountUtil.release(msg);
-        }
+        }*/
     }
 
     @Override
