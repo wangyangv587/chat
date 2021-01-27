@@ -10,16 +10,16 @@ import java.io.Serializable;
  */
 public class User implements Serializable {
 
-    private int age;
+    private Long id;
 
     private String name;
 
-    public int getAge() {
-        return age;
+    public Long getId() {
+        return id;
     }
 
-    public void setAge(int age) {
-        this.age = age;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {

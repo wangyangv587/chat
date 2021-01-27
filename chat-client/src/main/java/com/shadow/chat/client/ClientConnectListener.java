@@ -22,6 +22,7 @@ public class ClientConnectListener implements ChannelFutureListener {
                 Client.run("localhost", 8888);
             }, 5, TimeUnit.MILLISECONDS);
         } else {
+            Client.channel = channelFuture.channel();
             log.info("operationComplete | 重新连接服务器成功");
         }
     }

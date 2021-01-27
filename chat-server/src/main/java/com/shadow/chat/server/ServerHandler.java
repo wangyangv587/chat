@@ -1,28 +1,20 @@
 package com.shadow.chat.server;
 
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.shadow.chat.bean.Message;
-import com.shadow.chat.bean.SerializationUtil;
 import com.shadow.chat.bean.User;
-import com.shadow.chat.bean.client.ReqMessage;
-import com.shadow.chat.bean.client.ReqSingleDataDTO;
-import com.shadow.chat.bean.client.ReqUserLoginDTO;
-import com.shadow.chat.bean.constant.Chat;
 import com.shadow.chat.bean.server.RespMessage;
-import com.shadow.chat.bean.server.RespSingleDataDTO;
-import com.shadow.chat.bean.server.RespSystemDataDTO;
 import io.netty.buffer.*;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.CharsetUtil;
-import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -47,6 +39,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
      */
     private static ConcurrentHashMap<String, Channel> CHANNEL_GROUP = new ConcurrentHashMap<>();
 
+    private static final Scanner in = new Scanner(System.in);
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         CHANNEL_GROUP.put(ctx.channel().id().asLongText(), ctx.channel());
@@ -63,8 +56,14 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception{
         Message data = (Message)msg;
         String s = new String(data.getContent(), CharsetUtil.UTF_8);
-        System.out.println(s);
-        byte[] bytes = (s + "服务器回应").getBytes(StandardCharsets.UTF_8);
+        User user = JSONUtil.toBean(s, User.class);
+        System.out.println("收到客户端消息：" + user.getName());
+        if(user.getId()==null){
+            return;
+        }
+        String next = in.next();
+        user.setName("服务器对消息【" + user.getName() + "】" + "做出响应：【" + next + "】");
+        byte[] bytes = (user.toString() + "服务器回应").getBytes(StandardCharsets.UTF_8);
         Message d = new Message();
         d.setLength(bytes.length);
         d.setContent(bytes);

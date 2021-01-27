@@ -2,6 +2,7 @@ package com.shadow.chat.client;
 
 import com.shadow.chat.bean.MessageDecoder;
 import com.shadow.chat.bean.MessageEncoder;
+import com.shadow.chat.bean.User;
 import com.shadow.chat.bean.client.ReqMessage;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -12,7 +13,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Random;
+import java.util.Scanner;
 
 /**
  * @author Shadow
@@ -21,10 +23,32 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class Client {
 
-    private static Channel channel;
+    public static Channel channel;
+    private static final Scanner in = new Scanner(System.in);
+    private static final Random r = new Random();
 
     public static void main(String[] args) {
-        run("localhost", 8888);
+        new Thread(() -> {
+            run("localhost", 8888);
+        }).start();
+        while (true) {
+            String next = in.next();
+            User user = new User();
+            user.setId(r.nextLong());
+            user.setName(next);
+            System.out.println("发送数据：" + next);
+            System.out.println("等待服务器响应。。。");
+            CallTask callTask = new CallTask(user);
+            Object call = null;
+            try {
+                call = callTask.call();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("服务器响应：" + call);
+
+        }
     }
 
     public static void run(String host, int port) {
@@ -41,6 +65,7 @@ public class Client {
         } else {
             run0(host, port, userAccount);
         }
+
 
     }
 
@@ -66,9 +91,6 @@ public class Client {
             });
             ChannelFuture conn = b.connect(host, port).sync();
             conn.addListener(new ClientConnectListener());
-            conn.channel().eventLoop().schedule(()->{
-                System.out.println("aaaa");
-            },3, TimeUnit.SECONDS);
             /*conn.addListener((e) -> {
                 if (e.isSuccess()) {
                     channel = conn.channel();

@@ -15,14 +15,9 @@ import java.util.List;
  */
 public class MessageDecoder extends ByteToMessageDecoder {
 
-
     int length = 0;
 
     /**
-     * 0 0 0 2 1 1     length = 0
-     * 1 1      length = 2
-     * read
-     *
      * @param ctx
      * @param in
      * @param out
